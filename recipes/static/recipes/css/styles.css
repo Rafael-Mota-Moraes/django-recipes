@@ -263,3 +263,29 @@ h6 {
   color: var(--color-white);
   text-decoration: none;
 }
+
+.preparation-steps h1,
+.preparation-steps h2,
+.preparation-steps h3,
+.preparation-steps h4,
+.preparation-steps h5,
+.preparation-steps h6,
+.preparation-steps p,
+.preparation-steps ol,
+.preparation-steps ul,
+.preparation-steps pre {
+  margin: 2rem 0;
+}
+
+/* Generics */
+.center {
+  text-align: center;
+}
+
+.m-x {
+  margin: 0 var(--spacing-gutter-medium);
+}
+
+.m-y {
+  margin: var(--spacing-gutter-medium) 0;
+}
