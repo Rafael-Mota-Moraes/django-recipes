@@ -5,6 +5,7 @@ from recipes.models import Recipe
 from django.core.paginator import Paginator
 from utils.pagination import make_pagination
 import os
+from django.contrib import messages
 PER_PAGES = os.environ.get('PER_PAGE', 6)
 
 
@@ -14,6 +15,8 @@ def home(request: HttpRequest) -> HttpResponse:
     page_obj, pagination_range = make_pagination(
         request, recipes, PER_PAGES
     )
+
+    messages.success(request, 'aoooo')
 
     return render(request, 'recipes/pages/home.html', {
         'recipes': page_obj,
