@@ -16,8 +16,6 @@ def home(request: HttpRequest) -> HttpResponse:
         request, recipes, PER_PAGES
     )
 
-    messages.success(request, 'aoooo')
-
     return render(request, 'recipes/pages/home.html', {
         'recipes': page_obj,
         'pagination_range': pagination_range
