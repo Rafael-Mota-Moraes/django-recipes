@@ -15,7 +15,7 @@ class RecipeHomeViewTest(RecipeTestBase):
 
     def test_recipe_home_template_shows_no_recipes_found_if_no_recipes(self):
         response = self.client.get(reverse('recipes:home'))
-        self.assertIn('Não temos receitas publicadas ainda',
+        self.assertIn('No recipes published yet',
                       response.content.decode('utf-8'))
 
     def test_recipe_home_template_loads_recipes(self):
@@ -38,7 +38,7 @@ class RecipeHomeViewTest(RecipeTestBase):
         response = self.client.get(reverse('recipes:home'))
         content = response.content.decode('utf-8')
 
-        self.assertIn('Não temos receitas publicadas ainda', content)
+        self.assertIn('No recipes published yet', content)
 
     def test_recipe_home_is_paginated(self):
         for i in range(9):
@@ -56,9 +56,7 @@ class RecipeHomeViewTest(RecipeTestBase):
             self.assertEqual(len(paginator.get_page(3)), 3)
 
     def test_page_query_invalid_uses_page_1(self):
-        for i in range(9):
-            kwargs = {'author_data': {'username': f'u{i}'}, 'slug': f'r{i}'}
-            self.make_recipe(**kwargs)
+        self.make_recipe_in_batch()
 
         with patch('recipes.views.PER_PAGES', new=3):
             response = self.client.get(reverse('recipes:home') + '?page=1a')
