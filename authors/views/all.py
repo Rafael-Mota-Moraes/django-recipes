@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .forms import RegisterForm, LoginForm, AuthorRecipeForm
+from authors.forms import RegisterForm, LoginForm, AuthorRecipeForm
 from django.http import Http404
 from django.contrib import messages
 from django.urls import reverse
@@ -84,35 +84,6 @@ def dashboard(request):
     recipes = Recipe.objects.filter(is_published=False, author=user)
     return render(request, 'authors/pages/dashboard.html', {
         'recipes': recipes
-    })
-
-
-@login_required(login_url='authors:login', redirect_field_name='next')
-def dashboard_recipe_edit(request, id):
-    recipe = Recipe.objects.filter(id=id).first()
-
-    if not recipe:
-        raise Http404()
-
-    form = AuthorRecipeForm(
-        request.POST or None,
-        files=request.FILES or None,
-        instance=recipe
-    )
-
-    if form.is_valid():
-        recipe = form.save(commit=False)
-        recipe.author = request.user
-        recipe.preparation_steps_is_html = False
-        recipe.is_published = False
-
-        recipe.save()
-
-        messages.success(request, 'Recipe successfully saved')
-        return redirect(reverse('authors:dashboard_recipe_edit', args=(recipe.id,)))
-
-    return render(request, 'authors/pages/dashboard_recipe.html', {
-        'form': form,
     })
 
 

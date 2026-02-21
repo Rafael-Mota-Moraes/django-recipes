@@ -2,6 +2,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from tests.functional_tests.recipes.base import RecipeBaseFunctionalTest
 from unittest.mock import patch
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import pytest
 
 
@@ -26,10 +28,12 @@ class RecipeHomePageFunctionalTest(RecipeBaseFunctionalTest):
 
         search_input.send_keys(title_needed)
         search_input.send_keys(Keys.ENTER)
-
+        recipe_found = WebDriverWait(self.browser, 5).until(
+            EC.presence_of_element_located((By.CLASS_NAME, 'recipe-title'))
+        )
         self.assertIn(
             title_needed,
-            self.browser.find_element(By.CLASS_NAME, 'recipe-title').text,
+            recipe_found.text,
         )
 
     @patch('recipes.views.PER_PAGES', new=2)

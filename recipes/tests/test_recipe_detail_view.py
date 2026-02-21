@@ -5,12 +5,12 @@ from .test_recipe_base import RecipeTestBase
 
 class RecipeDetailViewTest(RecipeTestBase):
     def test_recipe_detail_view_function_is_correct(self):
-        view = resolve(reverse('recipes:recipe', kwargs={'id': 1}))
-        self.assertIs(view.func, views.recipe)
+        view = resolve(reverse('recipes:recipe', kwargs={'pk': 1}))
+        self.assertIs(view.func.view_class, views.RecipeDetail)
 
     def test_recipe_detail_view_returns_status_code_404_if_no_recipes_found(self):
         response = self.client.get(
-            reverse('recipes:recipe', kwargs={'id': 1001}))
+            reverse('recipes:recipe', kwargs={'pk': 1001}))
         self.assertEqual(response.status_code, 404)
 
     def test_recipe_detail_template_loads_the_correct_recipe(self):

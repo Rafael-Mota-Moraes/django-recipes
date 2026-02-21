@@ -30,7 +30,7 @@ class RecipeHomeViewTest(RecipeTestBase):
 
     def test_recipe_home_view_function_is_correct(self):
         view = resolve(reverse('recipes:home'))
-        self.assertIs(view.func, views.home)
+        self.assertIs(view.func.view_class, views.RecipeListViewHome)
 
     def test_recipe_home_template_dont_load_recipes_not_published(self):
         """Test recipe is_published False dont show"""
