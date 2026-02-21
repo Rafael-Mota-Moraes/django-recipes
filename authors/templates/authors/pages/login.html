@@ -6,13 +6,13 @@
   <div class="main-content center container">
     <h2>Login</h2>
 
-    {% if request.user.is_authenticated %}
-      You are logged with {{ request.user.username }}. Please, <form action="{% url "authors:logout" %}" method="POST" class="inline-form"> {% csrf_token %} <button type="submit" class="plain-text-button">click here</button></form> to logout.
-    {% endif %}
+    {% include "authors/partials/login_message.html" %}
 
   </div>
   <div class="main-content center container">
     {% include "global/partials/messages.html" %}
   </div>
-  {% include "global/partials/form.html" %}
+  {% if not user.is_authenticated %}
+    {% include "global/partials/form.html" %}
+  {% endif %}
 {% endblock content %}
