@@ -1,6 +1,6 @@
 from django.db.models.query import QuerySet
 from django.shortcuts import render, get_list_or_404, get_object_or_404
-from django.http import HttpResponse, HttpRequest, Http404
+from django.http import HttpResponse, HttpRequest, Http404, JsonResponse
 from django.db.models import Q
 from recipes.models import Recipe
 from django.core.paginator import Paginator
@@ -8,7 +8,7 @@ from utils.pagination import make_pagination
 import os
 from django.contrib import messages
 from django.views.generic import ListView, DetailView
-
+from django.forms.models import model_to_dict
 PER_PAGES = os.environ.get('PER_PAGE', 6)
 
 
@@ -102,3 +102,28 @@ class RecipeDetail(DetailView):
         })
 
         return ctx
+
+
+class RecipeListViewHomeApi(RecipeListViewBase):
+    template_name = 'recipes/pages/home.html'
+
+    def render_to_response(self, context, **response_kwargs) -> HttpResponse:
+        recipes = self.get_context_data()['recipes'].object_list.values()
+
+        return JsonResponse(list(recipes), safe=False)
+
+
+class RecipeDetailApiV1(RecipeDetail):
+    def render_to_response(self, context, **response_kwargs):
+        recipe = self.get_context_data()['recipe']
+        recipe_dict = model_to_dict(recipe)
+
+        if recipe_dict.get('cover'):
+            recipe_dict['cover'] = self.request.build_absolute_uri() + \
+                recipe_dict['cover'].url[1:]
+        else:
+            recipe_dict['cover'] = ''
+
+        del recipe_dict['is_published']
+
+        return JsonResponse(recipe_dict, safe=False)
