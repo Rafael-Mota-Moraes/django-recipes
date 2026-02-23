@@ -5,6 +5,8 @@ app_name = 'recipes'
 
 urlpatterns = [
     path('', views.RecipeListViewHome.as_view(), name='home'),
+    path('recipes/tags/<slug:slug>', views.RecipeListViewTag.as_view(),
+         name='tag'),  # type: ignore
     path('recipes/search/', views.RecipeListViewSearch.as_view(),
          name='search'),  # type: ignore
     path('recipes/category/<int:category_id>/',
@@ -14,4 +16,6 @@ urlpatterns = [
          name='recipes_api_v1'),
     path('recipes/api/v1/<int:pk>', views.RecipeDetailApiV1.as_view(),
          name='recipe_detail_api_v1'),
+    path('recipes/theory', views.theory,
+         name='theory'),
 ]

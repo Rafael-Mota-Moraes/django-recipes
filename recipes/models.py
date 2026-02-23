@@ -1,7 +1,11 @@
+from collections import defaultdict
+
 from django.db import models
 from django.contrib.auth.models import User
+from django.forms import ValidationError
 from django.urls import reverse
 from django.utils.text import slugify
+from tag.models import Tag
 
 
 class Category(models.Model):
@@ -11,7 +15,13 @@ class Category(models.Model):
         return self.name
 
 
+class RecipeManager(models.Manager):
+    def get_published(self):
+        return self.filter(is_published=True)
+
+
 class Recipe(models.Model):
+    objects = RecipeManager()
     title = models.CharField(max_length=65)
     description = models.CharField(max_length=165)
     slug = models.SlugField(unique=True)
@@ -30,6 +40,7 @@ class Recipe(models.Model):
         Category, on_delete=models.SET_NULL, null=True, blank=True, default=None)
     author = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True)
+    tags = models.ManyToManyField(Tag)
 
     def get_absolute_url(self):
         return reverse("recipes:recipe", args=(self.pk,))
@@ -40,6 +51,18 @@ class Recipe(models.Model):
             self.slug = slug
 
         super().save(*args, **kwargs)
+
+    def clean(self, *args, **kwargs):
+        error_messages = defaultdict(list)
+        recipe_from_db = Recipe.objects.filter(title__ixact=self.title).first()
+
+        if recipe_from_db:
+            if recipe_from_db.pk != self.pk:
+                error_messages['title'].append(
+                    'Found recipes with the same title')
+
+        if error_messages:
+            raise ValidationError(error_messages)  # type: ignore
 
     def __str__(self) -> str:
         return self.title
