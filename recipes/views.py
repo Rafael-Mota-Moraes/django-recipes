@@ -7,57 +7,61 @@ from utils.pagination import make_pagination
 import os
 from django.views.generic import ListView, DetailView
 from django.forms.models import model_to_dict
-PER_PAGES = os.environ.get('PER_PAGE', 6)
+
+PER_PAGES = os.environ.get("PER_PAGE", 6)
 
 
 def theory(request, *args, **kwargs):
     recipes = Recipe.objects.all()
-    context = {'recipes': recipes}
-    return render(request, 'recipes/pages/theory.html', context=context)
+    context = {"recipes": recipes}
+    return render(request, "recipes/pages/theory.html", context=context)
 
 
 class RecipeListViewBase(ListView):
     model = Recipe
-    context_object_name = 'recipes'
-    ordering = ['-id']
-    template_name = 'recipes/pages/home.html'
+    context_object_name = "recipes"
+    ordering = ["-id"]
+    template_name = "recipes/pages/home.html"
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
         qs = qs.filter(is_published=True)
-        qs = qs.select_related('author', 'category')
-        qs = qs.prefetch_related('tags')
+        qs = qs.select_related("author", "category")
+        qs = qs.prefetch_related("tags", "author__profile")
         return qs
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
 
         page_obj, pagination_range = make_pagination(
-            self.request, ctx.get('recipes'), PER_PAGES
+            self.request, ctx.get("recipes"), PER_PAGES
         )
 
-        ctx.update({'recipes': page_obj, 'pagination_range': pagination_range})
+        ctx.update({"recipes": page_obj, "pagination_range": pagination_range})
         return ctx
 
 
 class RecipeListViewHome(RecipeListViewBase):
-    template_name = 'recipes/pages/home.html'
+    template_name = "recipes/pages/home.html"
 
 
 class RecipeListViewCategory(RecipeListViewBase):
-    template_name = 'recipes/pages/category.html'
+    template_name = "recipes/pages/category.html"
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
 
-        ctx.update({'page_title': f'Search for {ctx.get("recipes")[0].category.name}',  # type:ignore
-                    })
+        ctx.update(
+            {
+                "page_title": f'Search for {ctx.get("recipes")[0].category.name}',  # type:ignore
+            }
+        )
         return ctx
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
 
-        qs = qs.filter(category__id=self.kwargs.get('category_id'))
+        qs = qs.filter(category__id=self.kwargs.get("category_id"))
 
         if not qs:
             raise Http404()
@@ -66,34 +70,39 @@ class RecipeListViewCategory(RecipeListViewBase):
 
 
 class RecipeListViewSearch(RecipeListViewBase):
-    template_name = 'recipes/pages/search.html'
+    template_name = "recipes/pages/search.html"
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
-        search_term = self.request.GET.get('q', '')
+        search_term = self.request.GET.get("q", "")
 
         if not search_term:
             raise Http404()
-        qs = qs.filter(Q(Q(title__icontains=search_term) |
-                         Q(description__icontains=search_term)),
-                       is_published=True)
+        qs = qs.filter(
+            Q(Q(title__icontains=search_term) | Q(description__icontains=search_term)),
+            is_published=True,
+        )
 
         return qs
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        search_term = self.request.GET.get('q', '')
+        search_term = self.request.GET.get("q", "")
 
-        ctx.update({'page_title': f'Search for {search_term}',
-                    'search_term': search_term,
-                    'aditional_url_query': f'&q={search_term}', })
+        ctx.update(
+            {
+                "page_title": f"Search for {search_term}",
+                "search_term": search_term,
+                "aditional_url_query": f"&q={search_term}",
+            }
+        )
         return ctx
 
 
 class RecipeDetail(DetailView):
     model = Recipe
-    context_object_name = 'recipe'
-    template_name = 'recipes/pages/recipe-view.html'
+    context_object_name = "recipe"
+    template_name = "recipes/pages/recipe-view.html"
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
@@ -103,55 +112,54 @@ class RecipeDetail(DetailView):
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
 
-        ctx.update({
-            'is_detail_page': True
-        })
+        ctx.update({"is_detail_page": True})
 
         return ctx
 
 
 class RecipeListViewHomeApi(RecipeListViewBase):
-    template_name = 'recipes/pages/home.html'
+    template_name = "recipes/pages/home.html"
 
     def render_to_response(self, context, **response_kwargs) -> HttpResponse:
-        recipes = self.get_context_data()['recipes'].object_list.values()
+        recipes = self.get_context_data()["recipes"].object_list.values()
 
         return JsonResponse(list(recipes), safe=False)
 
 
 class RecipeDetailApiV1(RecipeDetail):
     def render_to_response(self, context, **response_kwargs):
-        recipe = self.get_context_data()['recipe']
+        recipe = self.get_context_data()["recipe"]
         recipe_dict = model_to_dict(recipe)
 
-        if recipe_dict.get('cover'):
-            recipe_dict['cover'] = self.request.build_absolute_uri() + \
-                recipe_dict['cover'].url[1:]
+        if recipe_dict.get("cover"):
+            recipe_dict["cover"] = (
+                self.request.build_absolute_uri() + recipe_dict["cover"].url[1:]
+            )
         else:
-            recipe_dict['cover'] = ''
+            recipe_dict["cover"] = ""
 
-        del recipe_dict['is_published']
+        del recipe_dict["is_published"]
 
         return JsonResponse(recipe_dict, safe=False)
 
 
 class RecipeListViewTag(RecipeListViewBase):
-    template_name = 'recipes/pages/tag.html'
+    template_name = "recipes/pages/tag.html"
 
     def get_queryset(self, *args, **kwargs):
         qs = super().get_queryset(*args, **kwargs)
-        qs = qs.filter(tags__slug=self.kwargs.get('slug', ''))
+        qs = qs.filter(tags__slug=self.kwargs.get("slug", ""))
 
         return qs
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        page_title = Tag.objects.filter(slug=self.kwargs.get('slug', ''))
+        page_title = Tag.objects.filter(slug=self.kwargs.get("slug", ""))
 
         if not page_title:
-            page_title = 'No recipes found'
+            page_title = "No recipes found"
 
-        page_title = f'{page_title} - Tag |'
+        page_title = f"{page_title} - Tag |"
 
-        ctx.update({'page_title': f'Search for {page_title}'})
+        ctx.update({"page_title": f"Search for {page_title}"})
         return ctx

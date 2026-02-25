@@ -35,19 +35,20 @@ class Recipe(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_published = models.BooleanField(default=False)
     cover = models.ImageField(
-        upload_to='recipes/covers/%Y/%m/%d/', blank=True, default='')
+        upload_to="recipes/covers/%Y/%m/%d/", blank=True, default=""
+    )
     category = models.ForeignKey(
-        Category, on_delete=models.SET_NULL, null=True, blank=True, default=None)
-    author = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True)
-    tags = models.ManyToManyField(Tag)
+        Category, on_delete=models.SET_NULL, null=True, blank=True, default=None
+    )
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    tags = models.ManyToManyField(Tag, blank=True, default="")
 
     def get_absolute_url(self):
         return reverse("recipes:recipe", args=(self.pk,))
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            slug = f'{slugify(self.title)}'
+            slug = f"{slugify(self.title)}"
             self.slug = slug
 
         super().save(*args, **kwargs)
@@ -58,8 +59,7 @@ class Recipe(models.Model):
 
         if recipe_from_db:
             if recipe_from_db.pk != self.pk:
-                error_messages['title'].append(
-                    'Found recipes with the same title')
+                error_messages["title"].append("Found recipes with the same title")
 
         if error_messages:
             raise ValidationError(error_messages)  # type: ignore
