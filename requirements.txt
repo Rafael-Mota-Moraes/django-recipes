@@ -6,6 +6,8 @@ charset-normalizer==3.4.4
 coverage==7.13.4
 Django==5.2.9
 django-debug-toolbar==6.2.0
+django-stubs==5.2.9
+django-stubs-ext==5.2.9
 Faker==39.0.0
 h11==0.16.0
 idna==3.11
@@ -32,6 +34,7 @@ trio==0.33.0
 trio-typing==0.10.0
 trio-websocket==0.12.2
 types-certifi==2021.10.8.3
+types-PyYAML==6.0.12.20250915
 types-urllib3==1.26.25.14
 typing_extensions==4.15.0
 tzdata==2025.3
