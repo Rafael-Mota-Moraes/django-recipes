@@ -7,6 +7,8 @@ from utils.pagination import make_pagination
 import os
 from django.views.generic import ListView, DetailView
 from django.forms.models import model_to_dict
+from django.utils import translation
+from django.utils.translation import gettext as _
 
 PER_PAGES = os.environ.get("PER_PAGE", 6)
 
@@ -37,7 +39,15 @@ class RecipeListViewBase(ListView):
             self.request, ctx.get("recipes"), PER_PAGES
         )
 
-        ctx.update({"recipes": page_obj, "pagination_range": pagination_range})
+        html_language = translation.get_language()
+
+        ctx.update(
+            {
+                "recipes": page_obj,
+                "pagination_range": pagination_range,
+                "html_language": html_language,
+            }
+        )
         return ctx
 
 
@@ -51,9 +61,11 @@ class RecipeListViewCategory(RecipeListViewBase):
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
 
+        category_translation = _("Category")
+
         ctx.update(
             {
-                "page_title": f'Search for {ctx.get("recipes")[0].category.name}',  # type:ignore
+                "page_title": f'Search for {ctx.get("recipes")[0].category.name} - {category_translation}',  # type:ignore
             }
         )
         return ctx
