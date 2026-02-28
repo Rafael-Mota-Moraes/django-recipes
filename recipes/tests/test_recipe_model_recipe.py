@@ -11,34 +11,36 @@ class RecipeModelTest(RecipeTestBase):
 
     def make_recipe_no_defaults(self):
         recipe = Recipe(
-            category=self.make_category(name='Test default category'),
-            author=self.make_author(username='newuser'),
-            title='Recipe Title',
-            description='Recipe Description',
-            slug='recipe-slug-for-no-defaults',
+            category=self.make_category(name="Test default category"),
+            author=self.make_author(username="newuser"),
+            title="Recipe Title Another",
+            description="Recipe Description",
+            slug="recipe-slug-for-no-defaults",
             preparation_time=10,
-            preparation_time_unit='Minutos',
+            preparation_time_unit="Minutos",
             servings=5,
-            servings_unit='Porções',
-            preparation_steps='Recipe Preparation Steps',
+            servings_unit="Porções",
+            preparation_steps="Recipe Preparation Steps",
         )
         recipe.full_clean()
         recipe.save()
         return recipe
 
     def test_recipe_title_raises_error_if_title_has_more_than_65_chars(self):
-        self.recipe.title = 'A' * 70
+        self.recipe.title = "A" * 70
         with self.assertRaises(ValidationError):
             self.recipe.full_clean()
 
-    @parameterized.expand([
-        ('title', 65),
-        ('description', 165),
-        ('preparation_time_unit', 65),
-        ('servings_unit', 65),
-    ])
+    @parameterized.expand(
+        [
+            ("title", 65),
+            ("description", 165),
+            ("preparation_time_unit", 65),
+            ("servings_unit", 65),
+        ]
+    )
     def test_recipe_fields_max_length(self, field, max_length):
-        setattr(self.recipe, field, 'A' * (max_length + 1))
+        setattr(self.recipe, field, "A" * (max_length + 1))
         with self.assertRaises(ValidationError):
             self.recipe.full_clean()
 
@@ -51,7 +53,7 @@ class RecipeModelTest(RecipeTestBase):
         self.assertFalse(recipe.is_published)
 
     def test_recipe_string_representation(self):
-        self.recipe.title = 'Testing Representation'
+        self.recipe.title = "Testing Representation"
         self.recipe.full_clean()
         self.recipe.save()
-        self.assertEqual(str(self.recipe), 'Testing Representation')
+        self.assertEqual(str(self.recipe), "Testing Representation")
