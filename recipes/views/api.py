@@ -4,53 +4,61 @@ from django.shortcuts import get_object_or_404
 from tag.models import Tag
 from ..models import Recipe
 from ..serializers import RecipeSerializer, TagSerializer
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework import status
+from ..permissions import IsOwner
 
 
-@api_view(http_method_names=["GET", "POST"])
-def recipe_api_list(request):
-    if request.method == "GET":
-        recipes = Recipe.objects.get_published()[:10]
-        serializer = RecipeSerializer(
-            instance=recipes, many=True, context={"request": request}
-        )
-        return Response(serializer.data)
-    elif request.method == "POST":
-        serializer = RecipeSerializer(data=request.data, context={"request": request})
+class RecipePagination(PageNumberPagination):
+    page_size = 6
+
+
+class RecipeAPIv2ViewSet(ModelViewSet):
+    queryset = Recipe.objects.get_published()
+    permission_classes = [
+        IsAuthenticatedOrReadOnly,
+    ]
+    http_method_names = ["get", "options", "head", "patch", "post", "delete"]
+
+    def get_object(self):
+        pk = self.kwargs.get("pk")
+        obj = get_object_or_404(self.get_queryset(), pk=pk)
+
+        self.check_object_permissions(self.request, obj)
+
+        return obj
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-@api_view(["get", "patch", "delete"])
-def recipe_api_detail(request, pk):
-    recipe = get_object_or_404(Recipe.objects.filter(), pk=pk)
-    if request.method == "GET":
-        serializer = RecipeSerializer(
-            instance=recipe, data=request.data, context={"request": request}
-        )
-        return Response(serializer.data)
-    elif request.method == "PATCH":
-        serializer = RecipeSerializer(
-            instance=recipe,
-            data=request.data,
-            many=False,
-            context={"request": request},
-            partial=True,
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(author=request.user)
+        headers = self.get_success_headers(serializer.data)
         return Response(
-            serializer.data,
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
-    elif request.method == "DELETE":
-        recipe.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get_permissions(self):
+        if self.request.method in ["PATCH", "DELETE"]:
+            return [IsOwner()]
+
+        return super().get_permissions()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        category_id = self.request.query_params.get("category_id", None)
+
+        if category_id is not None:
+            qs = qs.filter(category_id=category_id)
+        return qs
+
+    serializer_class = RecipeSerializer
+    pagination_class = RecipePagination
 
 
 @api_view()
-def tap_api_detail(request, pk):
+def tag_api_detail(request, pk):
     tag = get_object_or_404(Tag.objects.filter(), pk=pk)
     serializer = TagSerializer(instance=tag, context={"request": request})
     return Response(serializer.data)
